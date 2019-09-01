@@ -31,7 +31,7 @@ func Translate(c *Config) error {
 	var visitedPaths = make(map[string]bool)
 	// Locate all the assets.
 	for _, input := range c.Input {
-		err = findFiles(input.Path, c.Prefix, input.Recursive, &toc, c.Ignore, knownFuncs, visitedPaths)
+		err = findFiles(input.Path, c.Prefix, input.Recursive, &toc, c.Ignore, knownFuncs, visitedPaths, c.Minify)
 		if err != nil {
 			return err
 		}
@@ -119,7 +119,7 @@ func (v ByName) Less(i, j int) bool { return v[i].Name() < v[j].Name() }
 // findFiles recursively finds all the file paths in the given directory tree.
 // They are added to the given map as keys. Values will be safe function names
 // for each file, which will be used when generating the output code.
-func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regexp.Regexp, knownFuncs map[string]int, visitedPaths map[string]bool) error {
+func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regexp.Regexp, knownFuncs map[string]int, visitedPaths map[string]bool, minify []*regexp.Regexp) error {
 	dirpath := dir
 	if len(prefix) > 0 {
 		dirpath, _ = filepath.Abs(dirpath)
@@ -170,12 +170,35 @@ func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regex
 		if ignoring {
 			continue
 		}
+		// 优先采用minify处理过的文件
+		for _, re := range minify {
+			if !re.MatchString(asset.Path) {
+				continue
+			}
+
+			if !strings.Contains(file.Name(), `.min.`) {
+				fileName := file.Name()
+				minFile := fileName[0:strings.LastIndex(fileName, `.`)] + `.min` + filepath.Ext(file.Name())
+				for _, file := range list {
+					if file.Name() == minFile {
+						ignoring = true
+						break
+					}
+				}
+				if ignoring {
+					break
+				}
+			}
+		}
+		if ignoring {
+			continue
+		}
 
 		if file.IsDir() {
 			if recursive {
 				recursivePath := filepath.Join(dir, file.Name())
 				visitedPaths[asset.Path] = true
-				findFiles(recursivePath, prefix, recursive, toc, ignore, knownFuncs, visitedPaths)
+				findFiles(recursivePath, prefix, recursive, toc, ignore, knownFuncs, visitedPaths, minify)
 			}
 			continue
 		} else if file.Mode()&os.ModeSymlink == os.ModeSymlink {
@@ -190,7 +213,7 @@ func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regex
 			}
 			if _, ok := visitedPaths[linkPath]; !ok {
 				visitedPaths[linkPath] = true
-				findFiles(asset.Path, prefix, recursive, toc, ignore, knownFuncs, visitedPaths)
+				findFiles(asset.Path, prefix, recursive, toc, ignore, knownFuncs, visitedPaths, minify)
 			}
 			continue
 		}

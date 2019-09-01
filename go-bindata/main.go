@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/go-bindata/go-bindata"
+	"github.com/admpub/bindata"
 )
 
 func main() {
@@ -54,11 +54,19 @@ func parseArgs() *bindata.Config {
 	flag.StringVar(&c.Output, "o", c.Output, "Optional name of the output file to be generated.")
 	flag.BoolVar(&version, "version", false, "Displays version information.")
 
+	minify := make([]string, 0)
+	flag.Var((*AppendSliceValue)(&minify), "minify", "Regex pattern to minify first")
+
 	ignore := make([]string, 0)
 	flag.Var((*AppendSliceValue)(&ignore), "ignore", "Regex pattern to ignore")
 
 	flag.Parse()
 
+	mPatterns := make([]*regexp.Regexp, 0)
+	for _, pattern := range minify {
+		mPatterns = append(mPatterns, regexp.MustCompile(pattern))
+	}
+	c.Minify = mPatterns
 	patterns := make([]*regexp.Regexp, 0)
 	for _, pattern := range ignore {
 		patterns = append(patterns, regexp.MustCompile(pattern))

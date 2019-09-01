@@ -144,6 +144,9 @@ type Config struct {
 	//
 	// This parameter can be provided multiple times.
 	Ignore []*regexp.Regexp
+
+	// Minify [SWH|+]
+	Minify []*regexp.Regexp
 }
 
 // NewConfig returns a default configuration struct.
@@ -156,6 +159,7 @@ func NewConfig() *Config {
 	c.Debug = false
 	c.Output = "./bindata.go"
 	c.Ignore = make([]*regexp.Regexp, 0)
+	c.Minify = make([]*regexp.Regexp, 0)
 	return c
 }
 
