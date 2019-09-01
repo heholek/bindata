@@ -171,14 +171,18 @@ func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regex
 			continue
 		}
 		// 优先采用minify处理过的文件
-		for _, re := range minify {
-			if !re.MatchString(asset.Path) {
-				continue
-			}
-
-			if !strings.Contains(file.Name(), `.min.`) {
-				fileName := file.Name()
-				minFile := fileName[0:strings.LastIndex(fileName, `.`)] + `.min` + filepath.Ext(file.Name())
+		if len(minify) > 0 {
+			fileName := file.Name()
+			dotPos := strings.LastIndex(fileName, `.`)
+			ext := filepath.Ext(fileName)
+			minFile := fileName[0:dotPos] + `.min` + ext
+			for _, re := range minify {
+				if !re.MatchString(asset.Path) {
+					continue
+				}
+				if strings.Contains(file.Name(), `.min.`) {
+					continue
+				}
 				for _, file := range list {
 					if file.Name() == minFile {
 						ignoring = true
@@ -189,9 +193,9 @@ func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regex
 					break
 				}
 			}
-		}
-		if ignoring {
-			continue
+			if ignoring {
+				continue
+			}
 		}
 
 		if file.IsDir() {
