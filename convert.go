@@ -174,6 +174,7 @@ func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regex
 		if len(minify) > 0 {
 			fileName := file.Name()
 			dotPos := strings.LastIndex(fileName, `.`)
+			if dotPos > 0 { 
 			ext := filepath.Ext(fileName)
 			minFile := fileName[0:dotPos] + `.min` + ext
 			for _, re := range minify {
@@ -195,6 +196,7 @@ func findFiles(dir, prefix string, recursive bool, toc *[]Asset, ignore []*regex
 			}
 			if ignoring {
 				continue
+			}
 			}
 		}
 
