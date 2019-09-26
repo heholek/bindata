@@ -1,6 +1,6 @@
-module github.com/go-bindata/go-bindata
+module github.com/admpub/bindata
 
-go 1.12
+go 1.13
 
 require (
 	github.com/kisielk/errcheck v1.2.0 // indirect
